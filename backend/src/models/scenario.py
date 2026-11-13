@@ -7,6 +7,8 @@ class CapacityScenario(Base):
  name:Mapped[str]=mapped_column(String(160),unique=True)
  profile_id:Mapped[str]=mapped_column(ForeignKey("service_profiles.id"))
  windows:Mapped[int]=mapped_column(Integer)
+ # 旧单方案为null；配对方案在此保存候选窗口数，两侧共用同一剖面与随机参数。
+ candidate_windows:Mapped[int|None]=mapped_column(Integer,nullable=True,default=None)
  arrival_multiplier:Mapped[float]=mapped_column(Float)
  service_multiplier:Mapped[float]=mapped_column(Float)
  duration_minutes:Mapped[int]=mapped_column(Integer)

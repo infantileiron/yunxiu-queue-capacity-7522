@@ -19,12 +19,17 @@ def seed():
   if not db.get(ServiceProfile,"demo-profile"):db.add(ServiceProfile(id="demo-profile",name="全日均值·单窗口服务剖面",dataset_id="demo-data",period="all",created_at=now(),**fit_profile(rows,"all")));db.flush()
   for c in (2,3,4):
    id=f"demo-scenario-{c}"
-   if not db.get(CapacityScenario,id):db.add(CapacityScenario(id=id,name=f"{c}窗口·全日容量预演",profile_id="demo-profile",windows=c,arrival_multiplier=1,service_multiplier=1,duration_minutes=480,warmup_minutes=120,replications=30,seed=2206,created_at=now()))
+   if not db.get(CapacityScenario,id):db.add(CapacityScenario(id=id,name=f"{c}窗口·全日容量预演",profile_id="demo-profile",windows=c,candidate_windows=None,arrival_multiplier=1,service_multiplier=1,duration_minutes=480,warmup_minutes=120,replications=30,seed=2206,created_at=now()))
+  if not db.get(CapacityScenario,"demo-scenario-paired"):db.add(CapacityScenario(id="demo-scenario-paired",name="3→4窗口·全日配对试验",profile_id="demo-profile",windows=3,candidate_windows=4,arrival_multiplier=1,service_multiplier=1,duration_minutes=480,warmup_minutes=120,replications=30,seed=2206,created_at=now()))
   db.flush()
   if not db.get(SimulationRun,"demo-run"):
    db.add(SimulationRun(id="demo-run",scenario_id="demo-scenario-3",status="completed",result=analyze(db.get(ServiceProfile,"demo-profile"),db.get(CapacityScenario,"demo-scenario-3")),error="",created_at=now()));db.flush()
+  if not db.get(SimulationRun,"demo-run-paired"):
+   db.add(SimulationRun(id="demo-run-paired",scenario_id="demo-scenario-paired",status="completed",result=analyze(db.get(ServiceProfile,"demo-profile"),db.get(CapacityScenario,"demo-scenario-paired")),error="",created_at=now()));db.flush()
   if not db.get(CapacityReview,"demo-review"):db.add(CapacityReview(id="demo-review",run_id="demo-run",note="全日均值不能代替高峰到达率；已记录指数独立假设与输入估计误差，建议另行复核高峰时段。",decision="accepted",author="analyst@yunxiu.demo",created_at=now()));db.flush()
+  if not db.get(CapacityReview,"demo-review-paired"):db.add(CapacityReview(id="demo-review-paired",run_id="demo-run-paired",note="配对试验共用同一批到达与服务，3→4窗口的逐次差值区间不含另一侧随机流波动；仍需复核高峰时段与指数独立假设。",decision="accepted",author="analyst@yunxiu.demo",created_at=now()));db.flush()
   if not db.get(Report,"demo-report"):db.add(Report(id="demo-report",run_id="demo-run",title="收样窗口·全日容量复核",published_by="admin@yunxiu.demo",created_at=now()))
+  if not db.get(Report,"demo-report-paired"):db.add(Report(id="demo-report-paired",run_id="demo-run-paired",title="收样窗口·3→4窗口配对复核",published_by="admin@yunxiu.demo",created_at=now()))
   db.commit()
   return {m.__tablename__:db.scalar(select(func.count()).select_from(m)) for m in (User,ArrivalDataset,ServiceProfile,CapacityScenario,SimulationRun,CapacityReview,Report)}
 if __name__=="__main__":print(json.dumps(seed(),ensure_ascii=False))

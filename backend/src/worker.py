@@ -17,8 +17,10 @@ def execute(id):
    run.result=analyze(profile,scenario);run.status="completed"
   except Exception as error:run.error=str(error);run.status="failed";traceback.print_exc()
   db.commit()
-with Session() as db:
- for id in db.scalars(select(SimulationRun.id).where(SimulationRun.status.in_(["queued","running"]))):client.lpush("queue-capacity:jobs",id)
-while True:
- heartbeat.touch();job=client.brpop("queue-capacity:jobs",timeout=1)
- if job:execute(job[1].decode())
+def main():
+ with Session() as db:
+  for id in db.scalars(select(SimulationRun.id).where(SimulationRun.status.in_(["queued","running"]))):client.lpush("queue-capacity:jobs",id)
+ while True:
+  heartbeat.touch();job=client.brpop("queue-capacity:jobs",timeout=1)
+  if job:execute(job[1].decode())
+if __name__=="__main__":main()
